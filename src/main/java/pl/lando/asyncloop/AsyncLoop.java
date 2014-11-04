@@ -10,6 +10,7 @@ public class AsyncLoop {
     L log = L.instance(System.out::println);
 
     private final Callback callback;
+    private AtomicBoolean isStopped = new AtomicBoolean(false);
     private AtomicBoolean isLoopExecuting = new AtomicBoolean(false);
     private AtomicBoolean isLoopBlocked = new AtomicBoolean(false);
     private Thread thread;
@@ -26,12 +27,14 @@ public class AsyncLoop {
         this.callback = callback;
     }
 
-    public void initialize() {
+    public AsyncLoop initialize() {
         log.debug("[initialize] begin");
 
         // TODO: initialize restart state callback
 
         log.debug("[initialize] end");
+
+        return this;
     }
 
     public void asyncLoopRestart() {
@@ -79,11 +82,24 @@ public class AsyncLoop {
         callback.apply();
     }
 
+    private boolean checkStopped() {
+        if(isStopped.get()) {
+            log.debug("[checkStopped] is stopped, stopping and restarting state");
+            isLoopExecuting.set(false);
+            // TODO: restart state
+            return true;
+        } else {
+            return false;
+        }
+    }
+
     public void execute() {
         if(isLoopExecuting.get()) {
             log.debug("[execute] already enabled");
         } else {
             isLoopExecuting.set(true);
+
+            if(checkStopped()) return;
 
             // TODO: if is first iteration then initialize() here
 
@@ -95,15 +111,15 @@ public class AsyncLoop {
                     Integer interval = cfg.interval();
                     log.debug("[execute] interval = {}", interval);
 
-                    if(interval < 0) {
-                        log.debug("[execute] stopping and restarting state");
-                        // TODO: restart state
-                        isLoopExecuting.set(false);
-                        return;
-                    }
+                    assert interval > 0;
+
+                    if(checkStopped()) return;
 
                     try {
                         Thread.sleep(interval);
+
+                        if(checkStopped()) return;
+
                         log.debug("[execute] executing ...", interval);
                         executeCallback();
                         isLoopExecuting.set(false);
@@ -129,5 +145,7 @@ public class AsyncLoop {
         }
     }
 
-
+    public void stop() {
+        isStopped.set(true);
+    }
 }
