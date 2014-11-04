@@ -11,5 +11,8 @@ repositories {
 mainClassName = 'pl.lando.asyncloop.App'
 
 dependencies {
+    compile 'org.slf4j:slf4j-api:+'
+    compile 'org.slf4j:slf4j-simple:+'
+    compile 'org.aeonbits.owner:owner:+'
     testCompile group: 'junit', name: 'junit', version: '4.11'
 }
