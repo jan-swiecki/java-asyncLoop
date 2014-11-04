@@ -7,7 +7,7 @@ import static org.junit.Assert.assertEquals;
 public class StringEvaluatorTest {
 
     @Test
-    public void evaluateOneTest() {
+    public void evaluateTest() {
         StringEvaluator evaluator = new StringEvaluator();
         assertEquals("x", evaluator.evaluate("x"));
         assertEquals("xy", evaluator.evaluate("x{}", "y"));

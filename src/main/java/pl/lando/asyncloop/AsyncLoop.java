@@ -4,13 +4,14 @@ import org.aeonbits.owner.ConfigFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import pl.lando.logger.L;
+import pl.lando.logger.LFactory;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class AsyncLoop {
 
 //    Logger log = LoggerFactory.getLogger(AsyncLoop.class);
-    L log = L.instance(System.out::println);
+    L log = LFactory.create(System.out::println);
 
     private AtomicBoolean isLoopExecuting = new AtomicBoolean(false);
     private AtomicBoolean isLoopBlocked = new AtomicBoolean(false);
