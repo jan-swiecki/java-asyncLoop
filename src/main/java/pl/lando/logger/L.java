@@ -11,16 +11,19 @@ public class L {
         public void apply(String message);
     }
 
+    public static L instance(LoggerCallback callback) {
+        return LFactory.create(callback);
+    }
+    public static L sout() {
+        return LFactory.create(System.out::println);
+    }
+
     private final LoggerCallback callback;
 
     public L(LoggerCallback callback, StringEvaluator evaluator) {
         this.callback = callback;
         this.evaluator = evaluator;
     }
-
-//    public static L instance(LoggerCallback callback) {
-//        return new L(callback);
-//    }
 
     public void d(String message, Object... values) {
         callback.apply("[DEBUG] "+ev(message, values));
@@ -49,5 +52,4 @@ public class L {
     private String ev(String message, Object... values) {
         return evaluator.evaluate(message, values);
     }
-
 }

@@ -1,13 +1,17 @@
 package pl.lando.asyncloop;
 
-import org.aeonbits.owner.ConfigFactory;
+import pl.lando.logger.L;
 
 public class App {
 
-    public static void main(String[] args) {
+    static L l = L.sout();
 
-        AsyncLoop asyncLoop = new AsyncLoop();
+    public static void main(String[] args) throws Exception {
+
+        AsyncLoop asyncLoop = new AsyncLoop(()->{
+            l.d("yeah!");
+        });
         asyncLoop.initialize();
-
+        asyncLoop.execute();
     }
 }

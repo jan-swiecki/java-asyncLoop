@@ -1,39 +1,42 @@
 package pl.lando.asyncloop;
 
 import org.aeonbits.owner.ConfigFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import pl.lando.logger.L;
-import pl.lando.logger.LFactory;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class AsyncLoop {
 
-//    Logger log = LoggerFactory.getLogger(AsyncLoop.class);
-    L log = LFactory.create(System.out::println);
+    L log = L.instance(System.out::println);
 
+    private final Callback callback;
     private AtomicBoolean isLoopExecuting = new AtomicBoolean(false);
     private AtomicBoolean isLoopBlocked = new AtomicBoolean(false);
     private Thread thread;
 
     private Cfg cfg;
 
-    public AsyncLoop() {
+    @FunctionalInterface
+    public static interface Callback {
+        public void apply();
+    }
+
+    public AsyncLoop(Callback callback) {
         cfg = ConfigFactory.create(Cfg.class);
+        this.callback = callback;
     }
 
     public void initialize() {
         log.debug("[initialize] begin");
 
-        // initialize callback
+        // TODO: initialize restart state callback
 
         log.debug("[initialize] end");
     }
 
     public void asyncLoopRestart() {
-        // restart state
-        launch();
+        // TODO: initialize restart state callback
+        execute();
     }
 
     /**
@@ -54,13 +57,13 @@ public class AsyncLoop {
 
                 try {
                     // execute main logic in same thread
-                    execute();
+                    executeCallback();
                 } finally {
                     // restore main loop
                     isLoopBlocked.set(false);
 
                     // execute main loop
-                    launch();
+                    execute();
                 }
             } catch (InterruptedException e) {
                 log.error("[forceExecute] interrupted", e);
@@ -68,32 +71,32 @@ public class AsyncLoop {
 
         } else {
             // just execute main loop
-            execute();
+            executeCallback();
         }
     }
 
-    public void execute() {
-
+    public void executeCallback() {
+        callback.apply();
     }
 
-    public void launch() {
+    public void execute() {
         if(isLoopExecuting.get()) {
-            log.debug("[launch] already enabled");
+            log.debug("[execute] already enabled");
         } else {
             isLoopExecuting.set(true);
 
             // TODO: if is first iteration then initialize() here
 
-            log.debug("[launch] starting loop");
+            log.debug("[execute] starting loop");
             thread = new Thread() {
                 public void run() {
-                    log.debug("[launch] start in thread {}", Thread.currentThread().getName());
+                    log.debug("[execute] start in thread {}", Thread.currentThread().getName());
 
                     Integer interval = cfg.interval();
-                    log.debug("[launch] interval = {}", interval);
+                    log.debug("[execute] interval = {}", interval);
 
                     if(interval < 0) {
-                        log.debug("[launch] stopping and restarting state");
+                        log.debug("[execute] stopping and restarting state");
                         // TODO: restart state
                         isLoopExecuting.set(false);
                         return;
@@ -101,24 +104,24 @@ public class AsyncLoop {
 
                     try {
                         Thread.sleep(interval);
-                        log.debug("[launch] executing ...", interval);
-                        execute();
+                        log.debug("[execute] executing ...", interval);
+                        executeCallback();
                         isLoopExecuting.set(false);
 
                         if(! isLoopBlocked.get()) {
-                            launch();
+                            execute();
                         } else {
-                            log.warn("[launch] loop is blocked, not executing next loop");
+                            log.warn("[execute] loop is blocked, not executing next loop");
                         }
                     } catch(InterruptedException ex) {
                         isLoopExecuting.set(false);
-                        log.error("[launch] interrupted", ex);
+                        log.error("[execute] interrupted", ex);
                     } catch(Exception ex) {
                         isLoopExecuting.set(false);
-                        log.error("[launch] error", ex);
+                        log.error("[execute] error", ex);
                     }
 
-                    log.debug("[launch] end in thread {}", Thread.currentThread().getName());
+                    log.debug("[execute] end in thread {}", Thread.currentThread().getName());
                 }
             };
 
