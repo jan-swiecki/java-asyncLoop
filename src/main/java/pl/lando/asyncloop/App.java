@@ -6,9 +6,14 @@ public class App {
 
     static L l = L.sout();
 
+    public static class State {
+        public Integer x = 0;
+    }
+
     public static void main(String[] args) throws Exception {
-        AsyncLoop asyncLoop = new AsyncLoop(()->{
-            l.d("yeah!");
+        AsyncLoop asyncLoop = new AsyncLoop<State>(new State(), (state)->{
+            state.x++;
+            l.d("yeah -> "+state.x);
         }).initialize();
         asyncLoop.execute();
 

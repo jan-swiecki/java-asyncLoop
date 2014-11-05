@@ -5,15 +5,17 @@ import pl.lando.logger.L;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class AsyncLoop {
+public class AsyncLoop<T> {
 
     L log = L.instance(System.out::println);
 
-    private final Callback callback;
+    private CallbackWithState<T> callbackWithState;
+    private Callback callback;
     private AtomicBoolean isStopped = new AtomicBoolean(false);
     private AtomicBoolean isLoopExecuting = new AtomicBoolean(false);
     private AtomicBoolean isLoopBlocked = new AtomicBoolean(false);
     private Thread thread;
+    private T state;
 
     private Cfg cfg;
 
@@ -22,9 +24,24 @@ public class AsyncLoop {
         public void apply();
     }
 
+    @FunctionalInterface
+    public static interface CallbackWithState<T> {
+        public void apply(T state);
+    }
+
     public AsyncLoop(Callback callback) {
-        cfg = ConfigFactory.create(Cfg.class);
         this.callback = callback;
+        init();
+    }
+
+    public AsyncLoop(T state, CallbackWithState<T> callback) {
+        this.state = state;
+        this.callbackWithState = callback;
+        init();
+    }
+
+    private void init() {
+        cfg = ConfigFactory.create(Cfg.class);
     }
 
     public AsyncLoop initialize() {
@@ -79,7 +96,11 @@ public class AsyncLoop {
     }
 
     public void executeCallback() {
-        callback.apply();
+        if(callbackWithState != null) {
+            callbackWithState.apply(state);
+        } else {
+            callback.apply();
+        }
     }
 
     private boolean checkStopped() {
@@ -136,7 +157,7 @@ public class AsyncLoop {
                         }
                     } catch(Exception ex) {
                         isLoopExecuting.set(false);
-                        log.error("[execute] error", ex);
+                        log.error("[execute] error {}", ex);
                     }
 
                     log.debug("[execute] end in thread {}", Thread.currentThread().getName());
