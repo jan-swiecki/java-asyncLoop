@@ -117,9 +117,14 @@ public class AsyncLoop {
 
                     try {
                         Thread.sleep(interval);
+                    } catch (InterruptedException e) {
+                        log.error("[execute] interrupted");
+                        isStopped.set(true);
+                    }
 
-                        if(checkStopped()) return;
+                    if(checkStopped()) return;
 
+                    try {
                         log.debug("[execute] executing ...", interval);
                         executeCallback();
                         isLoopExecuting.set(false);
@@ -129,9 +134,6 @@ public class AsyncLoop {
                         } else {
                             log.warn("[execute] loop is blocked, not executing next loop");
                         }
-                    } catch(InterruptedException ex) {
-                        isLoopExecuting.set(false);
-                        log.error("[execute] interrupted", ex);
                     } catch(Exception ex) {
                         isLoopExecuting.set(false);
                         log.error("[execute] error", ex);
@@ -147,5 +149,6 @@ public class AsyncLoop {
 
     public void stop() {
         isStopped.set(true);
+        thread.interrupt();
     }
 }
