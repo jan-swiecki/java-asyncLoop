@@ -5,44 +5,22 @@ import pl.lando.logger.L;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class AsyncLoop<T> {
+abstract public class AsyncLoop {
 
     L log = L.instance(System.out::println);
 
-    private CallbackWithState<T> callbackWithState;
-    private Callback callback;
     private AtomicBoolean isStopped = new AtomicBoolean(false);
     private AtomicBoolean isLoopExecuting = new AtomicBoolean(false);
     private AtomicBoolean isLoopBlocked = new AtomicBoolean(false);
     private Thread thread;
-    private T state;
 
     private Cfg cfg;
 
-    @FunctionalInterface
-    public static interface Callback {
-        public void apply();
-    }
-
-    @FunctionalInterface
-    public static interface CallbackWithState<T> {
-        public void apply(T state);
-    }
-
-    public AsyncLoop(Callback callback) {
-        this.callback = callback;
-        init();
-    }
-
-    public AsyncLoop(T state, CallbackWithState<T> callback) {
-        this.state = state;
-        this.callbackWithState = callback;
-        init();
-    }
-
-    private void init() {
+    public AsyncLoop() {
         cfg = ConfigFactory.create(Cfg.class);
     }
+
+    abstract void executeCallback();
 
     public AsyncLoop initialize() {
         log.debug("[initialize] begin");
@@ -92,14 +70,6 @@ public class AsyncLoop<T> {
         } else {
             // just execute main loop
             executeCallback();
-        }
-    }
-
-    public void executeCallback() {
-        if(callbackWithState != null) {
-            callbackWithState.apply(state);
-        } else {
-            callback.apply();
         }
     }
 
